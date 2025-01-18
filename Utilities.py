@@ -120,10 +120,25 @@ def combine_list_to_string(text_list, separator="\\n"):
     return combined_string
 
 #combined_docs = combine_list_to_string(retrieved_docs)
-apitoken = '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'
-#generated_response = generate_response(apitoken, query, combined_docs)
-#generated_response = answer_question(combined_docs, query)
-#print(f"Generated Response: {generated_response}")
+#apitoken = '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'
+
+
+#generating response - using HuggingFace Endpoint
+def generate_response(apitoken, question, documents, max_length=500):
+  repo_id = "mistralai/Mistral-7B-Instruct-v0.2"
+
+  llm = HuggingFaceEndpoint(
+      repo_id=repo_id,
+      max_length=128,
+      temperature=0.5,
+      huggingfacehub_api_token=apitoken,
+  )
+  template = f"Using the following documents, answer the question.\\nDocuments:\\n{documents}\\n\\nQuestion: {question}\\nAnswer:"
+  prompt = PromptTemplate.from_template(template)
+  llm_chain = prompt | llm
+  print(prompt)
+  response = llm_chain.invoke({"question": question})
+  return response
 
 #getting query response attributes by using a prompt
 def get_response_attributes(apitoken, question, documents, answer, max_length=500):
@@ -259,7 +274,7 @@ def compute_context_relevance(relevant_sentences, support_keys):
     total_relevance_score = 0
     total_relevant_sentences = len(relevant_sentences)
 
-    for sentence in relevant_sentence_keys:
+    for sentence in relevant_sentences:
       if sentence in support_keys:
         total_relevance_score += 1
 
@@ -272,7 +287,7 @@ def compute_context_relevance(relevant_sentences, support_keys):
 def compute_context_utilization(relevant_sentences, utilization_levels):
     total_utilization_score = 0
     total_relevant_sentences = len(relevant_sentences)
-    for sentence in relevant_sentence_keys:
+    for sentence in relevant_sentences:
       if sentence in utilization_levels:
         total_utilization_score += 1
     # To avoid division by zero in case there are no relevant sentences
@@ -301,89 +316,14 @@ def find_balanced_braces(input_string):
                     current_start = None  # Reset for the next match
 
     return matched_sections
-'''
-matches = find_balanced_braces(generated_response)
-for match in matches:
-    print("Matched Section:", match)
-
-input_json_string = matches[0]
-print(input_json_string)
-
-# Attempting to parse the JSON string
-try:
-    json_data = json.loads(input_json_string)  # Load JSON string into a Python dictionary
-    print("Parsed JSON data:", json_data)
-except json.JSONDecodeError as e:
-    print(f"Failed to decode JSON: {e}")
-    
-relavance_explanation = json_data['relevance_explanation']
-relevant_sentence_keys = json_data['all_relevant_sentence_keys']
-overall_supported_explanation = json_data['overall_supported_explanation']
-overall_supported = json_data['overall_supported']
-sentence_support_information = json_data['sentence_support_information']
-all_utilized_sentence_keys = json_data['all_utilized_sentence_keys']
-
-print (sentence_support_information)
-support_keys = []
-support_level = []
-for sentence_support in sentence_support_information:
-  support_keys += sentence_support['supporting_sentence_keys']
-  support_level.append(sentence_support['fully_supported'])
-
-#print(support_keys)
-#print(support_level)
-#compute Context Relevance
-contextrel = compute_context_relevance(relevant_sentence_keys, support_keys)
-print(f"Context Relevance = {contextrel}")
-
-contextutil = compute_context_utilization(relevant_sentence_keys, all_utilized_sentence_keys)
-print(f"Context Utilization = {contextutil}")
-
-compnum = np.intersect1d(support_keys, all_utilized_sentence_keys)
-completenes = compnum.size / len(support_keys)
-print(f"Completeness = {completenes}")
 
 
-#Adherence : whether all parts of response are grounded by context
-for val in support_level:
-  adherence = 1;
-  adherence = val*adherence
 
-print(f"Adherence = {adherence}")
 
 def mse(actual, predicted):
     return (actual - predicted)**2
   
-
-#get data from weaviate for the query input
-doccontextrel = 0
-doccontextutil = 0
-docadherence = 0
-for objs in retrieved_objs.objects:
-  doccontextrel = obj.properties['context_relevance_score']
-  doccontextutil = obj.properties['context_utilization_score']
-  doccontextutil = obj.properties['adherence_score']
-  break
-
-print (doccontextrel)
-print (doccontextutil)
-print (docadherence)
-
-#Compute RMSE, AUCROC
-from sklearn.metrics import mean_squared_error, roc_auc_score
-
-docadherencearr = np.array([docadherence, 0, 0])
-adherencearr = np.array([adherence, 0, 0])
-
-#compute RMSE
-rmsecontextrel = mse(doccontextrel, contextrel)
-rmsecontextutil = mse(doccontextutil, contextutil)
-aucscore = roc_auc_score(docadherencearr, adherencearr)
-
-print(f"RMSE Context Relevance = {rmsecontextrel}")
-print(f"RMSE Context Utilization = {rmsecontextutil}")
-print(f"AUROC Adherence = {aucscore}")
-
+'''
 
 #Compute RMSE, AUCROC
 from sklearn.metrics import mean_squared_error, roc_auc_score

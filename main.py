@@ -15,6 +15,7 @@ from Utilities import *
 
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
+from sklearn.metrics import mean_squared_error, roc_auc_score
 
 
 app = FastAPI()
@@ -144,6 +145,87 @@ def getValues(query):
     combined_docs = combine_list_to_string(retrieved_docs)
     apitoken = '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'
     
+    generated_response = generate_response(apitoken, query, combined_docs)
+
     generated_response = get_response_attributes(apitoken, query, combined_docs,generated_response )
     print(generated_response)
-    return {'message':generated_response}
+    
+    #Parse the json
+    matches = find_balanced_braces(generated_response)
+    for match in matches:
+        print("Matched Section:", match)
+
+    input_json_string = matches[0]
+    print(input_json_string)
+    
+    
+    # Attempting to parse the JSON string
+    try:
+        json_data = json.loads(input_json_string)  # Load JSON string into a Python dictionary
+        print("Parsed JSON data:", json_data)
+    except json.JSONDecodeError as e:
+        print(f"Failed to decode JSON: {e}")
+    
+    relavance_explanation = json_data['relevance_explanation']
+    relevant_sentence_keys = json_data['all_relevant_sentence_keys']
+    overall_supported_explanation = json_data['overall_supported_explanation']
+    overall_supported = json_data['overall_supported']
+    sentence_support_information = json_data['sentence_support_information']
+    all_utilized_sentence_keys = json_data['all_utilized_sentence_keys']
+
+    print (sentence_support_information)
+    support_keys = []
+    support_level = []
+    for sentence_support in sentence_support_information:
+        support_keys += sentence_support['supporting_sentence_keys']
+        support_level.append(sentence_support['fully_supported'])
+
+    #compute Context Relevance
+    contextrel = compute_context_relevance(relevant_sentence_keys, support_keys)
+    print(f"Context Relevance = {contextrel}")
+
+    contextutil = compute_context_utilization(relevant_sentence_keys, all_utilized_sentence_keys)
+    print(f"Context Utilization = {contextutil}")
+
+    compnum = np.intersect1d(support_keys, all_utilized_sentence_keys)
+    completenes = compnum.size / len(support_keys)
+    print(f"Completeness = {completenes}")
+
+    adherence = 1;
+
+    #Adherence : whether all parts of response are grounded by context
+    for val in support_level:
+        adherence = val*adherence
+
+        print(f"Adherence = {adherence}")
+
+    #get data from weaviate for the query input
+    doccontextrel = 0
+    doccontextutil = 0
+    docadherence = 0
+    for objs in retrieved_objs.objects:
+        doccontextrel = obj.properties['context_relevance_score']
+        doccontextutil = obj.properties['context_utilization_score']
+        doccontextutil = obj.properties['adherence_score']
+        break
+
+    print (doccontextrel)
+    print (doccontextutil)
+    print (docadherence)
+
+    #Compute RMSE, AUCROC
+
+    docadherencearr = np.array([docadherence, 0, 0])
+    adherencearr = np.array([adherence, 0, 0])
+
+    #compute RMSE
+    rmsecontextrel = mse(doccontextrel, contextrel)
+    rmsecontextutil = mse(doccontextutil, contextutil)
+    aucscore = roc_auc_score(docadherencearr, adherencearr)
+
+    print(f"RMSE Context Relevance = {rmsecontextrel}")
+    print(f"RMSE Context Utilization = {rmsecontextutil}")
+    print(f"AUROC Adherence = {aucscore}")
+
+
+    return {'message':generated_response, "Context Relevance":contextrel, "Context Utilization": contextutil, "Completeness": completenes, "Adherence": adherence, "RMSE Context Relevance": rmsecontextrel, "RMSE Context Utilization":rmsecontextutil}
