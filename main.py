@@ -126,10 +126,17 @@ def retrieve_similar_documents(query_text, limit=5):
     # Access the results in the expected format
     return result
 
-
+def checkConnAndConnect():
+    if client.is_ready() == False:
+        client = weaviate.connect_to_weaviate_cloud(
+        cluster_url=wcd_url,                                    # Replace with your Weaviate Cloud URL
+        auth_credentials=Auth.api_key(wcd_api_key),             # Replace with your Weaviate Cloud key
+        skip_init_checks=True,
+    )
 
 @app.get("/")
 def getValues(query):
+    #checkConnAndConnect()
     # query
     #query = "What role does T-cell count play in severe human adenovirus type 55 (HAdV-55) infection?"
     #query = "What is Power Saving Mode and Motion Lighting?"
@@ -145,9 +152,9 @@ def getValues(query):
     combined_docs = combine_list_to_string(retrieved_docs)
     apitoken = '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'
     
-    generated_response = generate_response(apitoken, query, combined_docs)
+    response = generate_response(apitoken, query, combined_docs)
 
-    generated_response = get_response_attributes(apitoken, query, combined_docs,generated_response )
+    generated_response = get_response_attributes(apitoken, query, combined_docs,response )
     print(generated_response)
     
     #Parse the json
@@ -158,7 +165,8 @@ def getValues(query):
     input_json_string = matches[0]
     print(input_json_string)
     
-    
+    json_data = None
+  
     # Attempting to parse the JSON string
     try:
         json_data = json.loads(input_json_string)  # Load JSON string into a Python dictionary
@@ -166,66 +174,73 @@ def getValues(query):
     except json.JSONDecodeError as e:
         print(f"Failed to decode JSON: {e}")
     
-    relavance_explanation = json_data['relevance_explanation']
-    relevant_sentence_keys = json_data['all_relevant_sentence_keys']
-    overall_supported_explanation = json_data['overall_supported_explanation']
-    overall_supported = json_data['overall_supported']
-    sentence_support_information = json_data['sentence_support_information']
-    all_utilized_sentence_keys = json_data['all_utilized_sentence_keys']
+    if json_data:
+        relavance_explanation = json_data['relevance_explanation']
+        relevant_sentence_keys = json_data['all_relevant_sentence_keys']
+        overall_supported_explanation = json_data['overall_supported_explanation']
+        overall_supported = json_data['overall_supported']
+        sentence_support_information = json_data['sentence_support_information']
+        all_utilized_sentence_keys = json_data['all_utilized_sentence_keys']
 
-    print (sentence_support_information)
-    support_keys = []
-    support_level = []
-    for sentence_support in sentence_support_information:
-        support_keys += sentence_support['supporting_sentence_keys']
-        support_level.append(sentence_support['fully_supported'])
+        print (sentence_support_information)
+        support_keys = []
+        support_level = []
+        for sentence_support in sentence_support_information:
+            support_keys += sentence_support['supporting_sentence_keys']
+            support_level.append(sentence_support['fully_supported'])
 
-    #compute Context Relevance
-    contextrel = compute_context_relevance(relevant_sentence_keys, support_keys)
-    print(f"Context Relevance = {contextrel}")
+        #compute Context Relevance
+        contextrel = compute_context_relevance(relevant_sentence_keys, support_keys)
+        print(f"Context Relevance = {contextrel}")
 
-    contextutil = compute_context_utilization(relevant_sentence_keys, all_utilized_sentence_keys)
-    print(f"Context Utilization = {contextutil}")
+        contextutil = compute_context_utilization(relevant_sentence_keys, all_utilized_sentence_keys)
+        print(f"Context Utilization = {contextutil}")
 
-    compnum = np.intersect1d(support_keys, all_utilized_sentence_keys)
-    completenes = compnum.size / len(support_keys)
-    print(f"Completeness = {completenes}")
+        compnum = np.intersect1d(support_keys, all_utilized_sentence_keys)
+        supportkeylen = len(support_keys)
+        if supportkeylen != 0:
+            completenes = compnum.size / supportkeylen
+        else:
+            completenes = 0
+        print(f"Completeness = {completenes}")
 
-    adherence = 1;
+        adherence = 1;
 
-    #Adherence : whether all parts of response are grounded by context
-    for val in support_level:
-        adherence = val*adherence
+        #Adherence : whether all parts of response are grounded by context
+        for val in support_level:
+            adherence = val*adherence
 
-        print(f"Adherence = {adherence}")
+            print(f"Adherence = {adherence}")
 
-    #get data from weaviate for the query input
-    doccontextrel = 0
-    doccontextutil = 0
-    docadherence = 0
-    for objs in retrieved_objs.objects:
-        doccontextrel = obj.properties['context_relevance_score']
-        doccontextutil = obj.properties['context_utilization_score']
-        doccontextutil = obj.properties['adherence_score']
-        break
+        #get data from weaviate for the query input
+        doccontextrel = 0
+        doccontextutil = 0
+        docadherence = 0
+        for objs in retrieved_objs.objects:
+            doccontextrel = obj.properties['context_relevance_score']
+            doccontextutil = obj.properties['context_utilization_score']
+            doccontextutil = obj.properties['adherence_score']
+            break
 
-    print (doccontextrel)
-    print (doccontextutil)
-    print (docadherence)
+        print (doccontextrel)
+        print (doccontextutil)
+        print (docadherence)
 
-    #Compute RMSE, AUCROC
+        #Compute RMSE, AUCROC
 
-    docadherencearr = np.array([docadherence, 0, 0])
-    adherencearr = np.array([adherence, 0, 0])
+        docadherencearr = np.array([docadherence, 0, 0])
+        adherencearr = np.array([adherence, 0, 0])
 
-    #compute RMSE
-    rmsecontextrel = mse(doccontextrel, contextrel)
-    rmsecontextutil = mse(doccontextutil, contextutil)
-    aucscore = roc_auc_score(docadherencearr, adherencearr)
+        #compute RMSE
+        rmsecontextrel = mse(doccontextrel, contextrel)
+        rmsecontextutil = mse(doccontextutil, contextutil)
+        aucscore = roc_auc_score(docadherencearr, adherencearr)
 
-    print(f"RMSE Context Relevance = {rmsecontextrel}")
-    print(f"RMSE Context Utilization = {rmsecontextutil}")
-    print(f"AUROC Adherence = {aucscore}")
+        print(f"RMSE Context Relevance = {rmsecontextrel}")
+        print(f"RMSE Context Utilization = {rmsecontextutil}")
+        print(f"AUROC Adherence = {aucscore}")
 
 
-    return {'message':generated_response, "Context Relevance":contextrel, "Context Utilization": contextutil, "Completeness": completenes, "Adherence": adherence, "RMSE Context Relevance": rmsecontextrel, "RMSE Context Utilization":rmsecontextutil}
+        return {'message':response, "Context Relevance":contextrel, "Context Utilization": contextutil, "Completeness": completenes, "Adherence": adherence, "RMSE Context Relevance": rmsecontextrel, "RMSE Context Utilization":rmsecontextutil}
+    else:
+        return{"Error": "JSON data unavailable"}
