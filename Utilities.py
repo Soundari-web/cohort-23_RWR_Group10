@@ -55,42 +55,42 @@ def get_all_documents_from_ragbench():
     documents += pubmedqadataset['train']['documents']
     documents += tatqadataset['train']['documents']
     documents += techqadataset['train']['documents']
-    doccontextrelarr = covidqadataset['train']['gpt3_context_relevance']
-    doccontextutilarr = covidqadataset['train']['gpt35_utilization']
-    docadherencearr = covidqadataset['train']['gpt3_adherence']
-    doccontextrelarr += cuaddataset['train']['gpt3_context_relevance']
-    doccontextutilarr += cuaddataset['train']['gpt35_utilization']
-    docadherencearr += cuaddataset['train']['gpt3_adherence']
-    doccontextrelarr += delucionqaadataset['train']['gpt3_context_relevance']
-    doccontextutilarr += delucionqaadataset['train']['gpt35_utilization']
-    docadherencearr += delucionqaadataset['train']['gpt3_adherence']
-    doccontextrelarr += emanualdataset['train']['gpt3_context_relevance']
-    doccontextutilarr += emanualdataset['train']['gpt35_utilization']
-    docadherencearr += emanualdataset['train']['gpt3_adherence']
-    doccontextrelarr += expertqadataset['train']['gpt3_context_relevance']
-    doccontextutilarr += expertqadataset['train']['gpt35_utilization']
-    docadherencearr += expertqadataset['train']['gpt3_adherence']
-    doccontextrelarr += finqadataset['train']['gpt3_context_relevance']
-    doccontextutilarr += finqadataset['train']['gpt35_utilization']
-    docadherencearr += finqadataset['train']['gpt3_adherence']
-    doccontextrelarr += hagriddataset['train']['gpt3_context_relevance']
-    doccontextutilarr += hagriddataset['train']['gpt35_utilization']
-    docadherencearr += hagriddataset['train']['gpt3_adherence']
-    doccontextrelarr += hotpotqadataset['train']['gpt3_context_relevance']
-    doccontextutilarr += hotpotqadataset['train']['gpt35_utilization']
-    docadherencearr += hotpotqadataset['train']['gpt3_adherence']
-    doccontextrelarr += msmarcodataset['train']['gpt3_context_relevance']
-    doccontextutilarr += msmarcodataset['train']['gpt35_utilization']
-    docadherencearr += msmarcodataset['train']['gpt3_adherence']
-    doccontextrelarr += pubmedqadataset['train']['gpt3_context_relevance']
-    doccontextutilarr += pubmedqadataset['train']['gpt35_utilization']
-    docadherencearr += pubmedqadataset['train']['gpt3_adherence']
-    doccontextrelarr += tatqadataset['train']['gpt3_context_relevance']
-    doccontextutilarr += tatqadataset['train']['gpt35_utilization']
-    docadherencearr += tatqadataset['train']['gpt3_adherence']
-    doccontextrelarr += techqadataset['train']['gpt3_context_relevance']
-    doccontextutilarr += techqadataset['train']['gpt35_utilization']
-    docadherencearr += techqadataset['train']['gpt3_adherence']
+    doccontextrelarr = covidqadataset['train']['relevance_score']
+    doccontextutilarr = covidqadataset['train']['utilization_score']
+    docadherencearr = list(map(float, covidqadataset['train']['adherence_score']))
+    doccontextrelarr += cuaddataset['train']['relevance_score']
+    doccontextutilarr += cuaddataset['train']['utilization_score']
+    docadherencearr += list(map(float, cuaddataset['train']['adherence_score']))
+    doccontextrelarr += delucionqaadataset['train']['relevance_score']
+    doccontextutilarr += delucionqaadataset['train']['utilization_score']
+    docadherencearr += [float(x) if x is not None else 0.0 for x in delucionqaadataset['train']['adherence_score']]
+    doccontextrelarr += emanualdataset['train']['relevance_score']
+    doccontextutilarr += emanualdataset['train']['utilization_score']
+    docadherencearr += list(map(float, emanualdataset['train']['adherence_score']))
+    doccontextrelarr += expertqadataset['train']['relevance_score']
+    doccontextutilarr += expertqadataset['train']['utilization_score']
+    docadherencearr += list(map(float, expertqadataset['train']['adherence_score']))
+    doccontextrelarr += finqadataset['train']['relevance_score']
+    doccontextutilarr += finqadataset['train']['utilization_score']
+    docadherencearr += list(map(float, finqadataset['train']['adherence_score']))
+    doccontextrelarr += hagriddataset['train']['relevance_score']
+    doccontextutilarr += hagriddataset['train']['utilization_score']
+    docadherencearr += list(map(float, hagriddataset['train']['adherence_score']))
+    doccontextrelarr += hotpotqadataset['train']['relevance_score']
+    doccontextutilarr += hotpotqadataset['train']['utilization_score']
+    docadherencearr += list(map(float, hotpotqadataset['train']['adherence_score']))
+    doccontextrelarr += msmarcodataset['train']['relevance_score']
+    doccontextutilarr += msmarcodataset['train']['utilization_score']
+    docadherencearr += list(map(float, msmarcodataset['train']['adherence_score']))
+    doccontextrelarr += pubmedqadataset['train']['relevance_score']
+    doccontextutilarr += pubmedqadataset['train']['utilization_score']
+    docadherencearr += list(map(float, pubmedqadataset['train']['adherence_score']))
+    doccontextrelarr += tatqadataset['train']['relevance_score']
+    doccontextutilarr += tatqadataset['train']['utilization_score']
+    docadherencearr += list(map(float, tatqadataset['train']['adherence_score']))
+    doccontextrelarr += techqadataset['train']['relevance_score']
+    doccontextutilarr += techqadataset['train']['utilization_score']
+    docadherencearr += list(map(float, techqadataset['train']['adherence_score']))
     return documents, doccontextrelarr, doccontextutilarr, docadherencearr
   
   #generating response - using HuggingFace Endpoint
@@ -110,17 +110,6 @@ def generate_response(apitoken, question, documents, max_length=500):
   response = llm_chain.invoke({"question": question})
   return response
 
-  
-#combine the retrieved documents to a string
-def combine_list_to_string(text_list, separator="\\n"):
-    combined_string = ""
-    for text in text_list:
-      combined_string += str(text)
-      combined_string += separator
-    return combined_string
-
-#combined_docs = combine_list_to_string(retrieved_docs)
-#apitoken = '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'
 
 
 #generating response - using HuggingFace Endpoint
@@ -328,49 +317,32 @@ def mse(actual, predicted):
     else:
         return -1
   
-'''
+#get document context rel, utilization, adherence from the specified dataset for a specific query
 
-#Compute RMSE, AUCROC
-from sklearn.metrics import mean_squared_error, roc_auc_score
+def getdocmetrics(query, datasetname):
 
-doccontextrel = 0
-doccontextutil = 0
-docadherence = 0
-ind = 0
-#get gpt3_context_relevance, gpt35_utilization, gpt3_adherence from documents
-for question in covidqadataset['train']['question']:
-#for question in emanualdataset['train']['question']:
-  if question == query:
-    print('found')
-    doccontextrel = covidqadataset['train'][ind]['gpt3_context_relevance']
-    doccontextutil = covidqadataset['train'][ind]['gpt35_utilization']
-    docadherence = covidqadataset['train'][ind]['gpt3_adherence']
-    break
-  else:
-    doccontextrel= -1
-    doccontextutil = -1
-    docadherence = -1
-  ind += 1
-
-
-print (doccontextrel)
-print (doccontextutil)
-print (docadherence)
-
-docadherencearr = np.array([docadherence, 0, 0])
-adherencearr = np.array([adherence, 0, 0])
-
-print (docadherencearr)
+  doccontextrel = 0
+  doccontextutil = 0
+  docadherence = 0
+  ind = 0
+  dataset = load_dataset("rungalileo/ragbench", datasetname)
+  for question in dataset['train']['question']:
+  
+    if question == query:
+      print('found')
+      doccontextrel = dataset['train'][ind]['relevance_score']
+      doccontextutil = dataset['train'][ind]['utilization_score']
+      docadherence = dataset['train'][ind]['adherence_score']
+      break
+    else:
+      doccontextrel= -1
+      doccontextutil = -1
+      docadherence = -1
+    ind += 1
 
 
+  print (doccontextrel)
+  print (doccontextutil)
+  print (docadherence)
+  return doccontextrel, doccontextutil, docadherence
 
-#compute RMSE
-rmsecontextrel = mse(doccontextrel, contextrel)
-rmsecontextutil = mse(doccontextutil, contextutil)
-aucscore = roc_auc_score(docadherencearr, adherencearr)
-
-print(f"RMSE Context Relevance = {rmsecontextrel}")
-print(f"RMSE Context Utilization = {rmsecontextutil}")
-print(f"AUROC Adherence = {aucscore}")
-
-'''
