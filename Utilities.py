@@ -332,7 +332,7 @@ def getdocmetrics(query, datasetname):
       print('found')
       doccontextrel = dataset['train'][ind]['relevance_score']
       doccontextutil = dataset['train'][ind]['utilization_score']
-      docadherence = dataset['train'][ind]['adherence_score']
+      docadherence = float(dataset['train'][ind]['adherence_score'])
       break
     else:
       doccontextrel= -1
