@@ -55,43 +55,8 @@ def get_all_documents_from_ragbench():
     documents += pubmedqadataset['train']['documents']
     documents += tatqadataset['train']['documents']
     documents += techqadataset['train']['documents']
-    doccontextrelarr = covidqadataset['train']['relevance_score']
-    doccontextutilarr = covidqadataset['train']['utilization_score']
-    docadherencearr = list(map(float, covidqadataset['train']['adherence_score']))
-    doccontextrelarr += cuaddataset['train']['relevance_score']
-    doccontextutilarr += cuaddataset['train']['utilization_score']
-    docadherencearr += list(map(float, cuaddataset['train']['adherence_score']))
-    doccontextrelarr += delucionqaadataset['train']['relevance_score']
-    doccontextutilarr += delucionqaadataset['train']['utilization_score']
-    docadherencearr += [float(x) if x is not None else 0.0 for x in delucionqaadataset['train']['adherence_score']]
-    doccontextrelarr += emanualdataset['train']['relevance_score']
-    doccontextutilarr += emanualdataset['train']['utilization_score']
-    docadherencearr += list(map(float, emanualdataset['train']['adherence_score']))
-    doccontextrelarr += expertqadataset['train']['relevance_score']
-    doccontextutilarr += expertqadataset['train']['utilization_score']
-    docadherencearr += list(map(float, expertqadataset['train']['adherence_score']))
-    doccontextrelarr += finqadataset['train']['relevance_score']
-    doccontextutilarr += finqadataset['train']['utilization_score']
-    docadherencearr += list(map(float, finqadataset['train']['adherence_score']))
-    doccontextrelarr += hagriddataset['train']['relevance_score']
-    doccontextutilarr += hagriddataset['train']['utilization_score']
-    docadherencearr += list(map(float, hagriddataset['train']['adherence_score']))
-    doccontextrelarr += hotpotqadataset['train']['relevance_score']
-    doccontextutilarr += hotpotqadataset['train']['utilization_score']
-    docadherencearr += list(map(float, hotpotqadataset['train']['adherence_score']))
-    doccontextrelarr += msmarcodataset['train']['relevance_score']
-    doccontextutilarr += msmarcodataset['train']['utilization_score']
-    docadherencearr += list(map(float, msmarcodataset['train']['adherence_score']))
-    doccontextrelarr += pubmedqadataset['train']['relevance_score']
-    doccontextutilarr += pubmedqadataset['train']['utilization_score']
-    docadherencearr += list(map(float, pubmedqadataset['train']['adherence_score']))
-    doccontextrelarr += tatqadataset['train']['relevance_score']
-    doccontextutilarr += tatqadataset['train']['utilization_score']
-    docadherencearr += list(map(float, tatqadataset['train']['adherence_score']))
-    doccontextrelarr += techqadataset['train']['relevance_score']
-    doccontextutilarr += techqadataset['train']['utilization_score']
-    docadherencearr += list(map(float, techqadataset['train']['adherence_score']))
-    return documents, doccontextrelarr, doccontextutilarr, docadherencearr
+    
+    return documents
   
   #generating response - using HuggingFace Endpoint
 def generate_response(apitoken, question, documents, max_length=500):
