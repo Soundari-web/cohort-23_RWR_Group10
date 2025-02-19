@@ -6,6 +6,8 @@ from weaviate.classes.init import Auth
 import os
 from weaviate.classes.config import Configure
 import weaviate.client
+from weaviate.classes.init import AdditionalConfig, Timeout, Auth
+
 
 #SentenceTransformer
 from sentence_transformers import SentenceTransformer, util
@@ -50,13 +52,16 @@ client = weaviate.connect_to_weaviate_cloud(
     cluster_url=wcd_url,                                    # Replace with your Weaviate Cloud URL
     auth_credentials=Auth.api_key(wcd_api_key),             # Replace with your Weaviate Cloud key
     skip_init_checks=True,
-)
+    additional_config=AdditionalConfig(timeout=Timeout(init=10,insert=3000, query=3000)),
+ )
+
 
 print(client.is_ready())  # Should print: `True`
 def chunk_and_embed(text, chunk_size=5, stride=3):
     if isinstance(text, list):
-      # Join the list of sentences into a single string if input is a list
-      text = " ".join(text)
+        #print(type(text))
+        # Join the list of sentences into a single string if input is a list
+        text = " ".join(text)
 
     # Split text into sentences
     sentences = nltk.sent_tokenize(text)
@@ -88,21 +93,6 @@ def create_schema():
                     'dataType': ['text'],
                     'description': "The text content"
                 },
-                {
-                    'name': 'adherence_score',
-                    'dataType': ['number'],
-                    'description': "Score indicating adherence"
-                },
-                {
-                    'name': 'context_relevance_score',
-                    'dataType': ['number'],
-                    'description': "Score indicating relevance of the context"
-                },
-                {
-                    'name': 'context_utilization_score',
-                    'dataType': ['number'],
-                    'description': "Score indicating how well the context is utilized"
-                }
             ]
       })
       print("created schema")
@@ -112,7 +102,7 @@ def create_schema():
 
 # Function to upload documents to Weaviate
 # Function to upload documents to Weaviate
-def upload_documents_to_weaviate(documents, doccontextrelarr, doccontextutilarr, docadherencearr):
+def upload_documents_to_weaviate(documents):
     collection = client.collections.get("RAGBenchData_New")
 
     index = 0
@@ -125,9 +115,6 @@ def upload_documents_to_weaviate(documents, doccontextrelarr, doccontextutilarr,
         collection.data.insert(
               {
                   'text': sentence,
-                  'adherence_score': docadherencearr[index],
-                  'context_relevance_score': doccontextrelarr[index],
-                  'context_utilization_score': doccontextutilarr[index]
               },
               vector=doc_vector
           )
@@ -146,12 +133,10 @@ def initsystem():
     except:
         print("Schema already exists")    
     
-    all_documents,doccontextrelarr, doccontextutilarr, docadherencearr = get_all_documents_from_ragbench()
+    all_documents = get_all_documents_from_ragbench()
     print(len(all_documents))
-    print(len(docadherencearr))
-    print(len(doccontextrelarr))
-    print(len(doccontextutilarr))
-    upload_documents_to_weaviate(all_documents, doccontextrelarr, doccontextutilarr, docadherencearr)
+ 
+    #upload_documents_to_weaviate(all_documents)
     
 initsystem()
 
